@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SigmaDOTS</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup">
+    <!-- HEADER -->
+    <header class="header">
+      <span class="logo">🛠️</span>
+      <div>
+        <h1>SigmaDOTS</h1>
+        <span class="version">v2.0 | Created by Dits</span>
+      </div>
+    </header>
+
+    <!-- BODY -->
+    <div class="body">
+      
+      <!-- ROBLOX -->
+      <div class="group">
+        <div class="group-title">🪷 Roblox</div>
+        
+        <label class="toggle">
+          <div class="toggle-text">
+            <span class="toggle-name">Quick Buttons</span>
+            <span class="toggle-desc">Cookies, Logout, Xbox</span>
+          </div>
+          <input type="checkbox" id="roblox-quickButtons" checked>
+          <span class="slider"></span>
+        </label>
+
+        <label class="toggle">
+          <div class="toggle-text">
+            <span class="toggle-name">Login Helper</span>
+            <span class="toggle-desc">Paste Username/Password</span>
+          </div>
+          <input type="checkbox" id="roblox-loginHelper" checked>
+          <span class="slider"></span>
+        </label>
+
+        <label class="toggle">
+          <div class="toggle-text">
+            <span class="toggle-name">Close 2SV Popup</span>
+            <span class="toggle-desc">Auto-close verification</span>
+          </div>
+          <input type="checkbox" id="roblox-close2SV" checked>
+          <span class="slider"></span>
+        </label>
+
+        <label class="toggle">
+          <div class="toggle-text">
+            <span class="toggle-name">Xbox Manager</span>
+            <span class="toggle-desc">Check & Disconnect</span>
+          </div>
+          <input type="checkbox" id="roblox-xboxManager" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <!-- GOOGLE SHEETS -->
+      <div class="group">
+        <div class="group-title">📊 Sheets</div>
+        
+        <label class="toggle">
+          <div class="toggle-text">
+            <span class="toggle-name">Auto Copy</span>
+            <span class="toggle-desc">Kolom B, C, D</span>
+          </div>
+          <input type="checkbox" id="sheets-autoCopy" checked>
+          <span class="slider"></span>
+        </label>
+
+        <label class="toggle">
+          <div class="toggle-text">
+            <span class="toggle-name">Block "myx/xx"</span>
+            <span class="toggle-desc">Filter kata terlarang</span>
+          </div>
+          <input type="checkbox" id="sheets-blockMyx" checked>
+          <span class="slider"></span>
+        </label>
+
+        <label class="toggle">
+          <div class="toggle-text">
+            <span class="toggle-name">Toast</span>
+            <span class="toggle-desc">Popup notifikasi</span>
+          </div>
+          <input type="checkbox" id="sheets-toastNotifications" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+      <div class="footer-row">
+        <label class="toggle small">
+          <span class="toggle-name">Debug</span>
+          <input type="checkbox" id="global-debugMode">
+          <span class="slider"></span>
+        </label>
+        
+        <div class="footer-actions">
+          <button class="btn-icon" id="btnExport" title="Export">📤</button>
+          <button class="btn-icon" id="btnImport" title="Import">📥</button>
+        </div>
+      </div>
+      <span class="status" id="statusText">Auto-saved</span>
+    </footer>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

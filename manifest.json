@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "SigmaDOTS",
+  "version": "2.0",
+  "description": "managing and automating tasks on Roblox and Google Sheets | Created by Dits",
+  "permissions": [
+    "clipboardRead",
+    "clipboardWrite",
+    "cookies",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://docs.google.com/*",
+    "https://*.roblox.com/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/mayo.png",
+      "48": "icons/mayo.png",
+      "128": "icons/mayo.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icons/mayo.png",
+    "48": "icons/mayo.png",
+    "128": "icons/mayo.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://mayoblox.com/cikocoki/orders/vilog*"],
+      "js": ["dist/content.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://www.roblox.com/*"],
+      "js": ["dist/roblox.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://docs.google.com/spreadsheets/*"],
+      "js": ["dist/invoice.js"],
+      "run_at": "document_idle"
+    }
+  ]
+}

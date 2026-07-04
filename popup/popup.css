@@ -1,0 +1,230 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 300px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  background: #0d1117;
+  color: #c9d1d9;
+  font-size: 13px;
+}
+
+.popup {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+.header {
+  padding: 14px 16px 12px;
+  background: #161b22;
+  border-bottom: 1px solid #21262d;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.header h1 {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f0f6fc;
+  letter-spacing: -0.3px;
+}
+
+.version {
+  font-size: 10px;
+  color: #8b949e;
+  font-weight: 400;
+  display: block;
+  margin-top: 1px;
+}
+
+/* ── BODY ── */
+.body {
+  padding: 4px 0;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.body::-webkit-scrollbar {
+  width: 3px;
+}
+
+.body::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 3px;
+}
+
+/* ── GROUP ── */
+.group {
+  padding: 6px 0;
+  border-bottom: 1px solid #21262d;
+}
+
+.group:last-child {
+  border-bottom: none;
+}
+
+.group-title {
+  padding: 6px 16px 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #8b949e;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── TOGGLE ── */
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: background 0.15s;
+  gap: 10px;
+}
+
+.toggle:hover {
+  background: #1c2128;
+}
+
+.toggle-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.toggle-name {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: #e6edf3;
+  line-height: 1.4;
+}
+
+.toggle-desc {
+  display: block;
+  font-size: 10.5px;
+  color: #8b949e;
+  margin-top: 1px;
+}
+
+/* ── SLIDER ── */
+.slider {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background: #30363d;
+  border-radius: 20px;
+  transition: background 0.25s;
+  flex-shrink: 0;
+}
+
+.slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: #c9d1d9;
+  border-radius: 50%;
+  transition: transform 0.25s;
+}
+
+input[type="checkbox"] {
+  display: none;
+}
+
+input[type="checkbox"]:checked + .slider {
+  background: #238636;
+}
+
+input[type="checkbox"]:checked + .slider::after {
+  transform: translateX(16px);
+  background: #f0f6fc;
+}
+
+/* ── SMALL TOGGLE (footer) ── */
+.toggle.small {
+  padding: 0;
+  gap: 6px;
+}
+
+.toggle.small .toggle-name {
+  font-size: 11px;
+  color: #8b949e;
+}
+
+.toggle.small .slider {
+  width: 28px;
+  height: 16px;
+}
+
+.toggle.small .slider::after {
+  width: 12px;
+  height: 12px;
+  top: 2px;
+  left: 2px;
+}
+
+.toggle.small input:checked + .slider::after {
+  transform: translateX(12px);
+}
+
+/* ── FOOTER ── */
+.footer {
+  padding: 8px 16px;
+  background: #161b22;
+  border-top: 1px solid #21262d;
+}
+
+.footer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.footer-actions {
+  display: flex;
+  gap: 2px;
+}
+
+.btn-icon {
+  background: none;
+  border: 1px solid #30363d;
+  color: #8b949e;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1;
+}
+
+.btn-icon:hover {
+  background: #21262d;
+  color: #e6edf3;
+  border-color: #8b949e;
+}
+
+.btn-icon:active {
+  background: #30363d;
+}
+
+.status {
+  display: block;
+  font-size: 9.5px;
+  color: #484f58;
+  margin-top: 5px;
+  text-align: center;
+  font-style: italic;
+}
