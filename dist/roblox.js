@@ -62,6 +62,13 @@
   }
 
   // ==================== QUICK BUTTONS ====================
+  // FIX (leak): ResizeObserver & resize-listener dulu dibikin baru setiap kali
+  // injectQuickButtonsV2() jalan tanpa pernah di-disconnect saat cleanupAll(),
+  // jadi numpuk terus tiap siklus login/logout dalam 1 sesi SPA. Sekarang disimpan
+  // di scope module dan di-disconnect eksplisit di cleanupAll().
+  let quickButtonsRO = null;
+  let quickButtonsResizeHandler = null;
+
   function injectQuickButtonsV2() {
     if (document.getElementById('rbx-quick-buttons-wrapper')) return;
 
@@ -116,14 +123,15 @@
     safeSendMessage({ action: 'check2SVStatus' }, (response) => {
       const badge = document.getElementById('rbx-2sv-badge');
       if (!badge) return;
+      if (response?.rateLimited) {
+        badge.textContent = '2SV: ...';
+        return; // FIX: jangan tampilin status palsu pas lagi rate-limited
+      }
       if (!response?.success) {
         badge.textContent = '2SV: ?';
         badge.style.background = '#6b7280';
         return;
       }
-      // Nilai mediaType asli dari Roblox API: 'Email', 'SMS', 'Authenticator', 'RecoveryCode'.
-      // (Bug lama: cek 'AuthenticatorApp' & 'SecurityKey' yang gak pernah match nilai asli API,
-      // jadi akun ber-Authenticator App selalu kebaca "No 2SV". Sekarang dicek case-insensitive juga.)
       const methods = (response.methods || []).map(m => String(m));
       const has = (name) => methods.some(m => m.toLowerCase() === name.toLowerCase());
 
@@ -178,14 +186,10 @@
     logoutBtn.onmouseenter = () => logoutBtn.style.opacity = '0.8';
     logoutBtn.onmouseleave = () => logoutBtn.style.opacity = '1';
     logoutBtn.onclick = () => {
-      if (typeof observer !== 'undefined' && observer) {
-        observer.disconnect();
-      }
+      observer.disconnect();
       safeSendMessage({ action: 'robloxLogout' }, (response) => {
         if (response?.success === false) {
-          if (typeof observer !== 'undefined' && observer) {
-            observer.observe(document.body, observerConfig);
-          }
+          observer.observe(document.body, observerConfig);
           showToast('❌ Logout gagal: ' + (response?.error || 'Unknown'), 'error');
           return;
         }
@@ -205,7 +209,9 @@
         || document.querySelector('nav')
         || document.querySelector('header');
 
-      if (!nav) return;
+      // FIX: dulu kalau navbar belum ketemu, function return early dan wrapper
+      // nyangkut `visibility: hidden` selamanya (gak ada retry). Sekarang di-retry.
+      if (!nav) { setTimeout(updatePosition, 300); return; }
 
       const navRect = nav.getBoundingClientRect();
       const PADDING = 8;
@@ -218,19 +224,19 @@
 
     updatePosition();
 
-    const ro = new ResizeObserver(() => updatePosition());
-    ro.observe(navbar);
-    ro.observe(document.documentElement);
+    // FIX: disconnect observer/listener lama sebelum bikin yang baru (cegah leak)
+    quickButtonsRO?.disconnect();
+    quickButtonsRO = new ResizeObserver(() => updatePosition());
+    quickButtonsRO.observe(navbar);
+    quickButtonsRO.observe(document.documentElement);
 
-    window.addEventListener('resize', updatePosition);
-    window.addEventListener('beforeunload', () => {
-      ro.disconnect();
-      window.removeEventListener('resize', updatePosition);
-    });
+    if (quickButtonsResizeHandler) window.removeEventListener('resize', quickButtonsResizeHandler);
+    quickButtonsResizeHandler = updatePosition;
+    window.addEventListener('resize', quickButtonsResizeHandler);
 
-    // Xbox async hanya jika xboxManager ON
     if (!settings || settings.roblox.xboxManager !== false) {
       checkXboxConnection((isConnected) => {
+        if (isConnected === null) return; // rate-limited, skip diem-diem, jangan asumsi apapun
         const slot = document.getElementById('rbx-xbox-btn-slot');
         if (!isConnected || !slot) return;
         const xboxBtn = document.createElement('button');
@@ -255,7 +261,10 @@
 
   function checkXboxConnection(callback) {
     safeSendMessage({ action: 'checkXboxConnection' }, (response) => {
-      callback(response?.success ? response.isConnected : false);
+      // FIX: dulu rate-limited dibalas seolah-olah `isConnected:false` (bohong).
+      // Sekarang caller dapet `null` supaya gak bikin keputusan UI dari data palsu.
+      if (!response || response.rateLimited) { callback(null); return; }
+      callback(response.success ? response.isConnected : false);
     });
   }
 
@@ -264,8 +273,6 @@
     if (document.getElementById('rbx-floating-close-2sv')) return;
     let pollingInterval = null;
 
-    // Deteksi popup 2SV secara resilient (gak bergantung ke 1 set classname doang,
-    // soalnya Roblox sering ganti-ganti markup/classname yang bikin selector lama gagal total).
     function isElementVisible(el) {
       if (!el || !el.isConnected) return false;
       const style = window.getComputedStyle(el);
@@ -337,7 +344,6 @@
       setTimeout(() => {
         const stillThere = findTwoSVOverlay();
         if (stillThere) {
-          // Fallback: kalo tombol close beneran gak ada / gagal, paksa buang overlay-nya
           stillThere.remove();
           document.body.style.overflow = '';
           document.body.style.paddingRight = '';
@@ -389,13 +395,6 @@
     if (existing && loginButton.parentNode.contains(existing)) return true;
     existing?.remove();
 
-    // BUGFIX: formCurrentStep dulu cuma direset ke 0 kalau username kosong, dan gampang ke-reset
-    // paksa ke 0 tiap kali initAll()/cleanupAll() jalan ulang (misal gara-gara toast bikin DOM
-    // mutation yang ke-detect sama observer). Efeknya: user paste username -> observer retrigger
-    // re-init -> tombol balik ke step 0 -> user klik lagi buat paste password malah nimpa username
-    // dengan isi clipboard password, dan field password gak pernah keisi.
-    // Sekarang step selalu dihitung ulang dari isi field asli tiap kali tombol di-(re)build,
-    // jadi progress user gak ilang meskipun tombolnya sempat di-rebuild.
     if (usernameInput.value && passwordInput.value) formCurrentStep = 2;
     else if (usernameInput.value) formCurrentStep = 1;
     else formCurrentStep = 0;
@@ -545,32 +544,30 @@
     return /^(\/[a-z]{2}(-[a-z]{2})?)?\/login$/i.test(window.location.pathname);
   }
 
-  function isHomePage() {
-    const path = window.location.pathname;
-    return path === '/' ||
-           path === '/home' ||
-           /^\/[a-z]{2}(-[a-z]{2})?\/home$/i.test(path) ||
-           /^\/[a-z]{2}(-[a-z]{2})?\/?$/i.test(path);
-  }
-
+  // FIX (Bug A): `.ROBLOSECURITY` itu HttpOnly, `document.cookie` gak akan PERNAH bisa baca dia.
+  // Kondisi lama itu dead code (selalu false), dihapus.
   function isLoggedIn() {
-    const authenticated = document.querySelector('.rbx-userchip')
-      || document.querySelector('.icon-nav-avatar')
-      || document.querySelector('#navbar-setting')
-      || document.querySelector('.avatar-card-image')
-      || document.querySelector('.profile-avatar-thumb');
-    const hasCookie = document.cookie.includes('.ROBLOSECURITY');
-    return !!(authenticated || hasCookie);
+    return !!(
+      document.querySelector('.rbx-userchip') ||
+      document.querySelector('.icon-nav-avatar') ||
+      document.querySelector('#navbar-setting') ||
+      document.querySelector('.avatar-card-image') ||
+      document.querySelector('.profile-avatar-thumb')
+    );
   }
 
   function cleanupAll() {
     document.getElementById('rbx-form-buttons')?.remove();
     document.getElementById('rbx-quick-buttons-wrapper')?.remove();
     document.getElementById('rbx-floating-close-2sv')?.remove();
-    // BUGFIX: dulu di sini formCurrentStep dipaksa balik ke 0 tiap cleanupAll() jalan,
-    // padahal cleanupAll() bisa kepanggil ulang di tengah-tengah user pasting (lihat penjelasan
-    // di injectFormButtons). Step yang benar sekarang dihitung ulang dari isi field asli
-    // di injectFormButtons(), jadi gak perlu (dan gak boleh) dipaksa reset di sini.
+
+    // FIX (Bug E): disconnect RO & remove resize listener supaya gak numpuk tiap cycle
+    quickButtonsRO?.disconnect();
+    quickButtonsRO = null;
+    if (quickButtonsResizeHandler) {
+      window.removeEventListener('resize', quickButtonsResizeHandler);
+      quickButtonsResizeHandler = null;
+    }
   }
 
   // ==================== INIT ALL ====================
@@ -665,10 +662,5 @@
 
   window.addEventListener('popstate', () => { lastPath = ''; setTimeout(initAll, 100); });
   window.addEventListener('rbx-locationchange', () => { lastPath = ''; setTimeout(initAll, 100); });
-  // BUGFIX: dulu ada `window.addEventListener('load', () => setTimeout(initAll, 500));` di sini.
-  // Ini redundant sama loadAndInit() di atas (yang udah ada retry logic sendiri kalau settings
-  // belum ready), dan tiap kali dia jalan bakal cleanupAll() + rebuild semua tombol dari nol +
-  // fetch ulang status 2SV/Xbox ke Roblox — padahal UI udah jalan normal. Ini salah satu pemicu
-  // utama kenapa form paste username/password kadang "kereset" sendiri di tengah proses.
 
 })();
