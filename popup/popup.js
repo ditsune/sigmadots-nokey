@@ -5,7 +5,7 @@ const SETTINGS_MAP = {
   'roblox-close2SV': { category: 'roblox', key: 'close2SV' },
   'roblox-xboxManager': { category: 'roblox', key: 'xboxManager' },
   'sheets-autoCopy': { category: 'sheets', key: 'autoCopy' },
-  'sheets-blockMyx': { category: 'sheets', key: 'blockMyx' },
+  'sheets-blockAxm': { category: 'sheets', key: 'blockAxm' },
   'sheets-toastNotifications': { category: 'sheets', key: 'toastNotifications' },
   'global-debugMode': { category: 'global', key: 'debugMode' }
 };
@@ -19,7 +19,7 @@ const DEFAULT_SETTINGS = {
   },
   sheets: {
     autoCopy: true,
-    blockMyx: true,
+    blockAxm: true,
     toastNotifications: true
   },
   global: {
@@ -32,23 +32,23 @@ let currentSettings = null;
 // ============= INIT =============
 document.addEventListener('DOMContentLoaded', async () => {
   console.log('Popup opened, loading settings...');
-  
+
   // Load settings dengan fallback
   currentSettings = await loadSettings();
-  
+
   // Fallback kalo gagal load
   if (!currentSettings || !currentSettings.roblox) {
     console.warn('Settings invalid, using defaults');
     currentSettings = DEFAULT_SETTINGS;
-    chrome.runtime.sendMessage({ 
-      action: 'saveSettings', 
-      settings: DEFAULT_SETTINGS 
+    chrome.runtime.sendMessage({
+      action: 'saveSettings',
+      settings: DEFAULT_SETTINGS
     });
     showStatus('⚠️ Reset to defaults');
   }
-  
+
   console.log('Settings:', currentSettings);
-  
+
   // Apply to UI
   let appliedCount = 0;
   Object.entries(SETTINGS_MAP).forEach(([elementId, path]) => {
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (checkbox && currentSettings[path.category]) {
       checkbox.checked = currentSettings[path.category][path.key];
       appliedCount++;
-      
+
       checkbox.addEventListener('change', async (e) => {
         await updateSetting(path.category, path.key, e.target.checked);
         showStatus('✓ Saved');
@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       console.warn(`Missing: #${elementId}`);
     }
   });
-  
+
   console.log(`Applied ${appliedCount} checkboxes`);
 
   document.getElementById('btnExport')?.addEventListener('click', exportSettings);
@@ -92,18 +92,18 @@ async function updateSetting(category, key, value) {
     console.error('No settings object');
     return;
   }
-  
+
   if (!currentSettings[category]) {
     console.error(`Category ${category} not found`);
     return;
   }
-  
+
   currentSettings[category][key] = value;
-  
+
   return new Promise((resolve) => {
-    chrome.runtime.sendMessage({ 
-      action: 'saveSettings', 
-      settings: currentSettings 
+    chrome.runtime.sendMessage({
+      action: 'saveSettings',
+      settings: currentSettings
     }, (response) => {
       if (chrome.runtime.lastError) {
         console.error('Save error:', chrome.runtime.lastError);
@@ -124,9 +124,9 @@ async function exportSettings() {
       showStatus('❌ No settings');
       return;
     }
-    
+
     const json = JSON.stringify(settings, null, 2);
-    
+
     try {
       await navigator.clipboard.writeText(json);
       showStatus('✅ Copied!');
@@ -151,32 +151,32 @@ async function importSettings() {
   try {
     const text = await navigator.clipboard.readText();
     const settings = JSON.parse(text);
-    
+
     // Validate & merge dengan default
     if (!settings || typeof settings !== 'object') {
       throw new Error('Invalid format');
     }
-    
+
     const merged = {
       roblox: { ...DEFAULT_SETTINGS.roblox, ...(settings.roblox || {}) },
       sheets: { ...DEFAULT_SETTINGS.sheets, ...(settings.sheets || {}) },
       global: { ...DEFAULT_SETTINGS.global, ...(settings.global || {}) }
     };
-    
-    await chrome.runtime.sendMessage({ 
-      action: 'importSettings', 
-      settings: merged 
+
+    await chrome.runtime.sendMessage({
+      action: 'importSettings',
+      settings: merged
     });
-    
+
     currentSettings = merged;
-    
+
     Object.entries(SETTINGS_MAP).forEach(([elementId, path]) => {
       const checkbox = document.getElementById(elementId);
       if (checkbox) {
         checkbox.checked = merged[path.category][path.key];
       }
     });
-    
+
     showStatus('✅ Imported!');
   } catch {
     // Fallback: file input
@@ -186,23 +186,23 @@ async function importSettings() {
     input.onchange = async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      
+
       const reader = new FileReader();
       reader.onload = async (event) => {
         try {
           const settings = JSON.parse(event.target.result);
-          
+
           const merged = {
             roblox: { ...DEFAULT_SETTINGS.roblox, ...(settings.roblox || {}) },
             sheets: { ...DEFAULT_SETTINGS.sheets, ...(settings.sheets || {}) },
             global: { ...DEFAULT_SETTINGS.global, ...(settings.global || {}) }
           };
-          
-          await chrome.runtime.sendMessage({ 
-            action: 'importSettings', 
-            settings: merged 
+
+          await chrome.runtime.sendMessage({
+            action: 'importSettings',
+            settings: merged
           });
-          
+
           currentSettings = merged;
           Object.entries(SETTINGS_MAP).forEach(([elementId, path]) => {
             const checkbox = document.getElementById(elementId);
@@ -210,7 +210,7 @@ async function importSettings() {
               checkbox.checked = merged[path.category][path.key];
             }
           });
-          
+
           showStatus('✅ Imported!');
         } catch {
           showStatus('❌ Invalid file');
@@ -226,9 +226,9 @@ async function importSettings() {
 function showStatus(message) {
   const statusEl = document.getElementById('statusText');
   if (!statusEl) return;
-  
+
   statusEl.textContent = message;
-  
+
   if (message.includes('✅') || message.includes('✓')) {
     statusEl.style.color = '#4ade80';
   } else if (message.includes('❌') || message.includes('⚠️')) {
@@ -236,7 +236,7 @@ function showStatus(message) {
   } else {
     statusEl.style.color = '#8b949e';
   }
-  
+
   setTimeout(() => {
     statusEl.textContent = 'Auto-saved';
     statusEl.style.color = '#8b949e';

@@ -22,19 +22,19 @@
   chrome.runtime.onMessage.addListener((request) => {
     if (request.action === 'settingsUpdated') {
       settings = request.settings;
-      
+
       if (activeObserver) {
         activeObserver.disconnect();
         activeObserver = null;
       }
-      
+
       // Hapus toast kalo disabled
       if (settings && settings.sheets.toastNotifications === false) {
         const existingToast = document.getElementById('invoice-toast');
         if (existingToast) existingToast.remove();
         toast = null;
       }
-      
+
       // Re-init observer
       initOriginalFeatures();
     }
@@ -44,12 +44,12 @@
   loadSettings(() => {
     if (initialized) return;
     initialized = true;
-    
+
     // Toast independen
     if (!settings || settings.sheets.toastNotifications !== false) {
       createToastElement();
     }
-    
+
     // Auto copy & block kata JALAN TERUS
     initOriginalFeatures();
   });
@@ -57,7 +57,7 @@
   // ============= TOAST =============
   function createToastElement() {
     if (settings && settings.sheets.toastNotifications === false) return;
-    
+
     const existing = document.getElementById('invoice-toast');
     if (existing) {
       toast = existing;
@@ -79,14 +79,14 @@
   function showToast(message, color = '#323232') {
     // Cek dulu sebelum create
     if (settings && settings.sheets.toastNotifications === false) return;
-    
+
     if (!toast) {
       if (settings && settings.sheets.toastNotifications === false) return;
       createToastElement();
     }
-    
+
     if (!toast) return;
-    
+
     toast.style.background = color;
     toast.textContent = message;
     toast.style.display = 'block';
@@ -127,7 +127,7 @@
 
     function processCurrentCell() {
       if (isProcessing) return;
-      
+
       isProcessing = true;
       setTimeout(() => { isProcessing = false; }, 100);
 
@@ -148,15 +148,15 @@
         lastCopied = '';
       }
 
-      // Block "myx" & "xx" JALAN TERUS meskipun auto copy OFF
-      if (column === 'B' && (!settings || settings.sheets.blockMyx !== false)) {
+      // Block "Axm" & "myx" JALAN TERUS meskipun auto copy OFF
+      if (column === 'B' && (!settings || settings.sheets.blockAxm !== false)) {
         const lowerValue = value.toLowerCase();
-        if (lowerValue.includes('myx')) {
-          showToast('🚫 Diblok: mengandung "myx"', '#c0392b');
+        if (lowerValue.includes('axm')) {
+          showToast('🚫 Diblok: mengandung "axm"', '#c0392b');
           return;
         }
-        if (lowerValue.includes('xx')) {
-          showToast('🚫 Diblok: mengandung "xx"', '#c0392b');
+        if (lowerValue.includes('myx')) {
+          showToast('🚫 Diblok: mengandung "myx"', '#c0392b');
           return;
         }
       }
@@ -177,12 +177,12 @@
         const retryInterval = setInterval(() => {
           retries++;
           const el = document.querySelector('#t-formula-bar-input');
-          if (el) { 
-            clearInterval(retryInterval); 
-            attachObserver(el); 
+          if (el) {
+            clearInterval(retryInterval);
+            attachObserver(el);
           }
-          else if (retries >= 60) { 
-            clearInterval(retryInterval); 
+          else if (retries >= 60) {
+            clearInterval(retryInterval);
           }
         }, 500);
         return;
@@ -191,26 +191,26 @@
     }
 
     function attachObserver(formulaBar) {
-      if (activeObserver) { 
-        activeObserver.disconnect(); 
-        activeObserver = null; 
+      if (activeObserver) {
+        activeObserver.disconnect();
+        activeObserver = null;
       }
-      activeObserver = new MutationObserver(() => { 
-        processCurrentCell(); 
+      activeObserver = new MutationObserver(() => {
+        processCurrentCell();
       });
-      activeObserver.observe(formulaBar, { 
-        childList: true, 
-        subtree: true, 
-        characterData: true 
+      activeObserver.observe(formulaBar, {
+        childList: true,
+        subtree: true,
+        characterData: true
       });
     }
 
-    document.addEventListener('click', () => { 
-      setTimeout(processCurrentCell, 80); 
+    document.addEventListener('click', () => {
+      setTimeout(processCurrentCell, 80);
     }, true);
-    
+
     document.addEventListener('keyup', (e) => {
-      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','Tab'].includes(e.key)) {
+      if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter', 'Tab'].includes(e.key)) {
         setTimeout(processCurrentCell, 80);
       }
     }, true);

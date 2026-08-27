@@ -8,7 +8,7 @@ const DEFAULT_SETTINGS = {
   },
   sheets: {
     autoCopy: true,
-    blockMyx: true,
+    blockAxm: true,
     toastNotifications: true
   },
   global: {
@@ -89,7 +89,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           chrome.tabs.sendMessage(tab.id, {
             action: 'settingsUpdated',
             settings: request.settings
-          }).catch(() => {});
+          }).catch(() => { });
         });
       });
       sendResponse({ success: true });
@@ -113,7 +113,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           chrome.tabs.sendMessage(tab.id, {
             action: 'settingsUpdated',
             settings: request.settings
-          }).catch(() => {});
+          }).catch(() => { });
         });
       });
       sendResponse({ success: true });
